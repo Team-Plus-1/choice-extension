@@ -9,6 +9,7 @@ let tobeblocked = false;
 
 const blocker = document.createElement("div");
 blocker.className = "blocker";
+// TODO : ADD LOGO
 
 const tooltip = document.createElement("div");
 tooltip.className = "tooltip";
