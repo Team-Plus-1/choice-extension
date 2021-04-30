@@ -1,15 +1,20 @@
 console.log("in blocker.js");
 
-// const allLinks = document.querySelectorAll("a");
-// // const isThumbLink = (linkElement) => {
-// //     const classes = linkElement.classList
-// // }
-// allLinks.filter(isThumbLink);
 let tobeblocked = false;
+let blockedURL;
+let blocking = false;
 
 const blocker = document.createElement("div");
 blocker.className = "blocker";
-// TODO : ADD LOGO
+
+const logoContainer = document.createElement("div");
+logoContainer.className = "logo-container";
+const logo = document.createElement("img");
+logo.className = "logo";
+logo.src =
+    "https://dl3.pushbulletusercontent.com/JB9r9Ex6qNqtfD3wgjFBvJQtTMhIFR9V/icon.svg";
+logoContainer.appendChild(logo);
+blocker.appendChild(logoContainer);
 
 const tooltip = document.createElement("div");
 tooltip.className = "tooltip";
@@ -25,7 +30,8 @@ blocker.appendChild(tooltip);
 console.log("IN BLOCKER.JS");
 
 const renderBlocker = (videoPlayer) => {
-    if (tobeblocked) {
+    if (tobeblocked && blockedURL === window.location.href) {
+        console.log(`blocking `);
         const {
             x,
             y,
@@ -41,21 +47,18 @@ const renderBlocker = (videoPlayer) => {
         blocker.style.top = `${top}px`;
         blocker.style.left = `${left}px`;
         videoPlayer.pause();
-        console.log(videoPlayer.getBoundingClientRect());
     }
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.blockContent === true) {
         tobeblocked = true;
-        console.log("MASKED EXTENSION IS ACTIVE");
+        blockedURL = request.blockedURL;
         let videoPlayer;
         videoPlayer = document.querySelector("video");
-        console.log(videoPlayer);
         setInterval(() => {
             if (tobeblocked) {
                 videoPlayer = document.querySelector("video");
-                console.log(videoPlayer);
                 videoPlayer.pause();
             }
         }, 5000);
@@ -70,8 +73,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         }
         document.body.insertBefore(blocker, document.body.children[0]);
-        renderBlocker(videoPlayer);
+        setInterval(() => {
+            renderBlocker(videoPlayer);
+        }, 50);
         window.onscroll = () => {
+            // renderBlocker(videoPlayer);
             renderBlocker(videoPlayer);
         };
         window.onchange = () => {
@@ -81,6 +87,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             renderBlocker(videoPlayer);
         };
         videoPlayer.onplay = () => {
+            // setTimeout(() => {
+            // }, 3000);
+            // console.log("setting blocking to true");
+            // blocking = true;
             renderBlocker(videoPlayer);
         };
         if (request.contains !== undefined) {

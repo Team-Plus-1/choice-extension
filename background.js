@@ -6,13 +6,17 @@ const BLOCKED_URLS = [
         url: "https://www.youtube.com/watch?v=DXUAyRRkI6k",
         tags: ["cats", "no dogs"],
     },
+    {
+        url: "https://www.youtube.com/watch?v=R6Dw1bjC2uI",
+        tags: ["more", "cats"],
+    },
 ];
 
 const isBlockedURL = (url) => {
     for (blockedURL of BLOCKED_URLS) {
         console.log(blockedURL);
-        console.log(blockedURL.url, url, blockedURL.url === url);
-        if (blockedURL.url === url) return blockedURL;
+        console.log(blockedURL.url, url, url.includes(blockedURL.url));
+        if (url.includes(blockedURL.url)) return blockedURL;
     }
     return false;
 };
@@ -29,6 +33,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             chrome.tabs.sendMessage(tabId, {
                 blockContent: true,
                 redirectURL: `http://localhost:3000/home/?url=${tab.url}`,
+                blockedURL: tab.url,
                 contains: blockedURL.tags.join(", "),
             });
         } else {
