@@ -15,9 +15,48 @@ const HOST_URL = "https://choice-app-backend.herokuapp.com";
 
 const isBlockedURL = async (url) => {
     try {
-        const response = await fetch(`${HOST_URL}/api/reports?url=${url}`);
+        // var myHeaders = new Headers();
+        // myHeaders.append("Content-Type", "application/json");
+
+        // var raw = JSON.stringify({
+        //     url: url,
+        // });
+
+        // var requestOptions = {
+        //     method: "POST",
+        //     headers: myHeaders,
+        //     body: raw,
+        //     redirect: "follow",
+        // };
+
+        // const response = await fetch(
+        //     "https://choice-app-backend.herokuapp.com/api/reports",
+        //     requestOptions
+        // );
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        var raw = JSON.stringify({
+            url: url,
+        });
+
+        var requestOptions = {
+            method: "POST",
+            headers: myHeaders,
+            body: raw,
+            redirect: "follow",
+        };
+
+        let response = await fetch(
+            "http://localhost:5000/api/reports",
+            requestOptions
+        );
+        // .then((response) => response.text())
+        // .then((result) => console.log(result))
+        // .catch((error) => console.log("error", error));
         let { reply, data } = await response.json();
         let tags = new Set();
+        console.log(data);
         data.forEach((element) => {
             element.categories.forEach((category) => {
                 tags.add(category);
@@ -42,11 +81,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         const json = await isBlockedURL(tab.url);
         console.log(`blocked url = `, json);
 
-        if (json.reply) {
+        if (json.reply && !tab.url.includes("localhost:3000")) {
             console.log("Blocking", tab.url);
             chrome.tabs.sendMessage(tabId, {
                 blockContent: true,
-                redirectURL: `http://localhost:3000/`,
+                redirectURL: `http://localhost:3000/seereport?url=${tab.url}`,
                 blockedURL: tab.url,
                 contains: json.tags.join(", "),
             });
@@ -79,7 +118,7 @@ chrome.contextMenus.onClicked.addListener((clickData) => {
                     if (response.videoElementPresent) {
                         chrome.tabs.sendMessage(tabs[0].id, {
                             redirect: true,
-                            redirectURL: `http://localhost:3000/home/?url=${clickData.pageUrl}`,
+                            redirectURL: `http://localhost:3000/report?url=${clickData.pageUrl}`,
                         });
                     } else {
                         chrome.tabs.sendMessage(tabs[0].id, {

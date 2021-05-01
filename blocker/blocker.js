@@ -30,7 +30,11 @@ blocker.appendChild(tooltip);
 console.log("IN BLOCKER.JS");
 
 const renderBlocker = (videoPlayer) => {
-    if (tobeblocked && blockedURL === window.location.href) {
+    if (
+        tobeblocked &&
+        blockedURL === window.location.href &&
+        videoPlayer !== null
+    ) {
         console.log(`blocking `);
         const {
             x,
