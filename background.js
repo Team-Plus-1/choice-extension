@@ -1,4 +1,5 @@
 console.log("in background.js");
+const HOST_URL = "https://choice-app-backend.herokuapp.com";
 // TODO: whitelisted urls
 // ############################## Blocker ##################################
 // const BLOCKED_URLS = [
@@ -13,14 +14,25 @@ console.log("in background.js");
 // ];
 
 const isBlockedURL = async (url) => {
-    const response = await fetch(`http://localhost:3000/api/check?url=${url}`);
-    const json = await response.json();
+    try {
+        const response = await fetch(`${HOST_URL}/api/reports?url=${url}`);
+        let { reply, data } = await response.json();
+        let tags = new Set();
+        data.forEach((element) => {
+            element.categories.forEach((category) => {
+                tags.add(category);
+            });
+        });
+        return { reply, tags: Array.from(tags) };
+    } catch (error) {
+        console.log(error);
+        return { reply: false, tags: null };
+    }
     // for (blockedURL of BLOCKED_URLS) {
     //     console.log(blockedURL);
     //     console.log(blockedURL.url, url, url.includes(blockedURL.url));
     //     if (url.includes(blockedURL.url)) return blockedURL;
     // }
-    return json;
 };
 
 // Listen for when a Tab changes state
@@ -28,15 +40,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo && changeInfo.status == "complete") {
         console.log("Tab updated: ", tabId, changeInfo, tab);
         const json = await isBlockedURL(tab.url);
-        console.log(`blocked url = ${json}`);
+        console.log(`blocked url = `, json);
 
         if (json.reply) {
             console.log("Blocking", tab.url);
             chrome.tabs.sendMessage(tabId, {
                 blockContent: true,
-                redirectURL: `http://localhost:3000/home/?url=${tab.url}`,
+                redirectURL: `http://localhost:3000/`,
                 blockedURL: tab.url,
-                contains: json.data.join(", "),
+                contains: json.tags.join(", "),
             });
         } else {
             console.log("Unblocking", tab.url);
@@ -51,7 +63,9 @@ let contextMenuItem = {
     title: "Report Video in Page",
     contexts: ["all"],
 };
-chrome.contextMenus.create(contextMenuItem);
+chrome.runtime.onInstalled.addListener(() => {
+    chrome.contextMenus.create(contextMenuItem);
+});
 chrome.contextMenus.onClicked.addListener((clickData) => {
     console.log(clickData);
     if (clickData.menuItemId === "reportRedirect") {
